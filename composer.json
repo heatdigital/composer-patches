@@ -1,6 +1,6 @@
 {
-  "name": "cweagans/composer-patches",
-  "description": "Provides a way to patch Composer packages.",
+  "name": "heatdigital/composer-patches",
+  "description": "Provides a way to patch Composer packages. Based on the great cweagans/composer-patches.",
   "minimum-stability": "dev",
   "license": "BSD-3-Clause",
   "type": "composer-plugin",
