@@ -1,11 +1,12 @@
 {
   "name": "heatdigital/composer-patches",
+  "version": "1.0.0",
   "description": "Provides a way to patch Composer packages. Based on the great cweagans/composer-patches.",
   "minimum-stability": "dev",
   "license": "BSD-3-Clause",
   "type": "composer-plugin",
   "extra": {
-    "class": "cweagans\\Composer\\Patches"
+    "class": "HD\\ComposerPatches\\Patches"
   },
   "authors": [
     {
@@ -22,9 +23,15 @@
     "phpunit/phpunit": "~4.6"
   },
   "autoload": {
-    "psr-4": {"cweagans\\Composer\\": "src"}
+    "psr-4": {
+      "cweagans\\Composer\\": "src",
+      "HD\\ComposerPatches\\": "src-hd"
+    }
   },
   "autoload-dev": {
-    "psr-4": {"cweagans\\Composer\\Tests\\": "tests"}
+    "psr-4": {
+      "cweagans\\Composer\\Tests\\": "tests",
+      "HD\\ComposerPatches\\Tests\\": "tests-hd"
+    }
   }
 }

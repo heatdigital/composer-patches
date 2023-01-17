@@ -47,6 +47,7 @@ class Patches implements PluginInterface, EventSubscriberInterface {
    * @var array $patches
    */
   protected $patches;
+  protected $localPatches;
 
   /**
    * Apply plugin modifications to composer
@@ -84,6 +85,34 @@ class Patches implements PluginInterface, EventSubscriberInterface {
   }
 
   /**
+   * TODO: should create error if patch finally is missing as lock one
+   * @param PackageInterface $package
+   * @param array $patches
+   */
+  protected function checkUrls(PackageInterface $package, &$patches, bool $isChecking)
+  {
+    $installationManager = $this->composer->getInstallationManager();
+    $install_path = $installationManager->getInstaller($package->getType())->getInstallPath($package);
+    foreach ($patches as $package_name => $package_patches) {
+      foreach ($package_patches as $key => $url) {
+        $local_patch_filepath = $install_path . DIRECTORY_SEPARATOR . $url;
+        $isLocalPatch = $package->getName() == 'hd/adyen-payment';
+        $localPatchExists = file_exists($local_patch_filepath);
+        if ($isLocalPatch) {
+          if (!$localPatchExists && $isChecking) {
+            $this->localPatches[$package_name][$key] = $local_patch_filepath;
+            unset($patches[$package_name][$key]);
+            if (empty($patches[$package_name])) unset($patches[$package_name]);
+            #var_dump($package_name, $local_patch_filepath);exit;
+          } else {
+            $patches[$package_name][$key] = $local_patch_filepath;
+          }
+        }
+      }
+    }
+  }
+
+  /**
    * Before running composer install,
    * @param Event $event
    */
@@ -111,6 +140,9 @@ class Patches implements PluginInterface, EventSubscriberInterface {
                 $extra['patches'][$package_name] = array_diff($extra['patches'][$package_name], $patches);
               }
             }
+          }
+          if (!empty($extra['patches'])) {
+            $this->checkUrls($package, $extra['patches'], true);
           }
           $this->installedPatches[$package->getName()] = $extra['patches'];
         }
@@ -184,6 +216,9 @@ class Patches implements PluginInterface, EventSubscriberInterface {
       if ($operation instanceof InstallOperation || $operation instanceof UpdateOperation) {
         $package = $this->getPackageFromOperation($operation);
         $extra = $package->getExtra();
+        if (!empty($this->localPatches[$package->getName()])){
+          $extra['patches'] = array_merge($extra['patches'] ?? [], $this->localPatches[$package->getName()]);
+        }
         if (isset($extra['patches'])) {
           if (isset($patches_ignore[$package->getName()])) {
             foreach ($patches_ignore[$package->getName()] as $package_name => $patches) {
@@ -192,6 +227,7 @@ class Patches implements PluginInterface, EventSubscriberInterface {
               }
             }
           }
+          $this->checkUrls($package, $extra['patches'], false);
           $this->patches = $this->arrayMergeRecursiveDistinct($this->patches, $extra['patches']);
         }
         // Unset installed patches for this package
